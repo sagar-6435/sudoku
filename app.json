@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "sudoku",
+    "name": "Sudoku",
     "slug": "sudoku",
+    "description": "A Classic Sudoku Game developed by webgenixx.",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
