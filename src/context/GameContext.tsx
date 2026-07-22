@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { RewardedAd, RewardedAdEventType, TestIds } from 'react-native-google-mobile-ads';
 import { Board, Difficulty, checkWin, generatePuzzle } from '../utils/sudoku';
 
 type GameContextType = {
@@ -13,6 +15,7 @@ type GameContextType = {
     isWon: boolean;
     hintsUsed: number;
     darkTheme: boolean;
+    streak: number;
     selectedCell: [number, number] | null;
     startNewGame: (diff: Difficulty) => void;
     makeMove: (num: number) => void;
@@ -20,6 +23,7 @@ type GameContextType = {
     erase: () => void;
     hint: () => void;
     togglePause: () => void;
+    continueAfterError: () => void;
     setSelectedCell: (cell: [number, number] | null) => void;
     setDarkTheme: (val: boolean) => void;
     saveGame: () => Promise<void>;
@@ -41,13 +45,68 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [history, setHistory] = useState<Board[]>([]);
     const [hintsUsed, setHintsUsed] = useState(0);
     const [darkTheme, setDarkThemeState] = useState(false);
+    const [streak, setStreak] = useState(0);
 
     useEffect(() => {
-        const loadTheme = async () => {
+        const initializeApp = async () => {
+            // Theme
             const d = await AsyncStorage.getItem('darkTheme');
             if (d !== null) setDarkThemeState(d === 'true');
+
+            // Streak
+            const today = new Date().toDateString();
+            const lastPlayed = await AsyncStorage.getItem('lastPlayedDate');
+            let currentStreak = parseInt(await AsyncStorage.getItem('currentStreak') || '0', 10);
+
+            if (lastPlayed !== today) {
+                if (lastPlayed) {
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    if (lastPlayed === yesterday.toDateString()) {
+                        currentStreak += 1;
+                    } else {
+                        currentStreak = 1; // broken streak
+                    }
+                } else {
+                    currentStreak = 1; // first time
+                }
+                await AsyncStorage.setItem('lastPlayedDate', today);
+                await AsyncStorage.setItem('currentStreak', currentStreak.toString());
+            }
+            setStreak(currentStreak);
+
+            // Notifications
+            try {
+                Notifications.setNotificationHandler({
+                    handleNotification: async () => ({
+                        shouldShowAlert: true,
+                        shouldPlaySound: true,
+                        shouldSetBadge: false,
+                        shouldShowBanner: true,
+                        shouldShowList: true
+                    } as any),
+                });
+
+                const { status } = await Notifications.requestPermissionsAsync();
+                if (status === 'granted') {
+                    await Notifications.cancelAllScheduledNotificationsAsync();
+                    await Notifications.scheduleNotificationAsync({
+                        content: {
+                            title: "🔥 Keep your streak alive!",
+                            body: "It's time to solve a Sudoku puzzle. Don't lose your daily streak!",
+                        },
+                        trigger: {
+                            seconds: 7200, // 2 hours
+                            repeats: true,
+                        } as any,
+                    });
+                }
+            } catch (e) {
+                console.error("Notification setup error", e);
+            }
         };
-        loadTheme();
+
+        initializeApp();
     }, []);
 
     const setDarkTheme = (val: boolean) => {
@@ -137,12 +196,16 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         {
                             text: "Watch Ad",
                             onPress: () => {
-                                // MOCK: Simulate ad watching time
-                                Alert.alert("AdMob Mock", "Simulating 5s ad...", [], { cancelable: false });
-                                setTimeout(() => {
-                                    Alert.alert("Ad Finished", "You earned a hint!");
+                                const rewarded = RewardedAd.createForAdRequest(TestIds.REWARDED, {
+                                    requestNonPersonalizedAdsOnly: true
+                                });
+                                rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {
+                                    rewarded.show();
+                                });
+                                rewarded.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
                                     executeHintLogic();
-                                }, 3000);
+                                });
+                                rewarded.load();
                             }
                         }
                     ]
@@ -199,6 +262,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const togglePause = () => setIsPaused(!isPaused);
 
+    const continueAfterError = () => {
+        setMistakes(0);
+    };
+
     const saveGame = async () => {
         try {
             const state = {
@@ -237,8 +304,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return (
         <GameContext.Provider value={{
             difficulty, initialBoard, currentBoard, solutionBoard, mistakes,
-            timeElapsed, isPaused, isWon, hintsUsed, selectedCell, darkTheme,
-            startNewGame, makeMove, undo, erase, hint, togglePause, setSelectedCell, setDarkTheme,
+            timeElapsed, isPaused, isWon, hintsUsed, selectedCell, darkTheme, streak,
+            startNewGame, makeMove, undo, erase, hint, togglePause, continueAfterError, setSelectedCell, setDarkTheme,
             saveGame, loadGame
         }}>
             {children}

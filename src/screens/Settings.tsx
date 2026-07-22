@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import { Platform, StatusBar, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AdBanner from '../components/AdBanner';
 import { useGame } from '../context/GameContext';
 
 export default function Settings() {
@@ -64,6 +65,8 @@ export default function Settings() {
                     </Text>
                 </View>
             </View>
+            <View style={{ flex: 1 }} />
+            <AdBanner />
         </SafeAreaView>
     );
 }

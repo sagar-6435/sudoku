@@ -1,7 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useEffect } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { TestIds, useInterstitialAd } from 'react-native-google-mobile-ads';
+import AdBanner from '../components/AdBanner';
 import { useGame } from '../context/GameContext';
 import { RootStackParamList } from '../navigation/AppNavigator';
 
@@ -9,19 +12,47 @@ export default function Win() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const { timeElapsed, difficulty, startNewGame, mistakes, darkTheme } = useGame();
 
+    // Interstitial Ad setup
+    const interstitial = useInterstitialAd(TestIds.INTERSTITIAL);
+
+    useEffect(() => {
+        const checkCountAndLoad = async () => {
+            const countStr = await AsyncStorage.getItem('winCount');
+            const count = countStr ? parseInt(countStr, 10) : 0;
+            // Show every 2 games
+            if (count % 2 === 0) {
+                interstitial.load();
+            }
+            await AsyncStorage.setItem('winCount', (count + 1).toString());
+        };
+        checkCountAndLoad();
+    }, []);
+
     const mins = Math.floor(timeElapsed / 60).toString().padStart(2, '0');
     const secs = (timeElapsed % 60).toString().padStart(2, '0');
 
+    const triggerAdThen = (callback: () => void) => {
+        if (interstitial.isLoaded) {
+            interstitial.show();
+            // In a real app we'd wait for the ad to close. 
+            // For now, we perform action immediately as it overlays anyway.
+        }
+        callback();
+    };
+
     const handleNewGame = async () => {
-        // Clear saved game
         await AsyncStorage.removeItem('savedGame');
-        startNewGame(difficulty);
-        navigation.replace('Game');
+        triggerAdThen(() => {
+            startNewGame(difficulty);
+            navigation.replace('Game');
+        });
     };
 
     const handleHome = async () => {
         await AsyncStorage.removeItem('savedGame');
-        navigation.navigate('Home');
+        triggerAdThen(() => {
+            navigation.navigate('Home');
+        });
     };
 
     return (
@@ -40,6 +71,9 @@ export default function Win() {
             <TouchableOpacity style={[styles.btn, styles.homeBtn]} onPress={handleHome}>
                 <Text style={styles.btnText}>Home</Text>
             </TouchableOpacity>
+
+            <View style={{ flex: 1, maxHeight: 40 }} />
+            <AdBanner />
         </View>
     );
 }
@@ -50,7 +84,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#f8f9fa',
-        padding: 20,
+        paddingTop: 40,
     },
     title: {
         fontSize: 48,

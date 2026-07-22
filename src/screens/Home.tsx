@@ -9,7 +9,7 @@ import { Difficulty } from '../utils/sudoku';
 
 export default function Home() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-    const { startNewGame, loadGame, darkTheme } = useGame();
+    const { startNewGame, loadGame, darkTheme, streak } = useGame();
     const [hasSavedGame, setHasSavedGame] = useState(false);
 
     useFocusEffect(
@@ -36,6 +36,11 @@ export default function Home() {
     return (
         <View style={[styles.containerOuter, darkTheme && styles.containerOuterDark]}>
             <View style={[styles.container, darkTheme && styles.containerDark]}>
+                <View style={styles.streakBadge}>
+                    <Text style={[styles.streakText, darkTheme && styles.streakTextDark]}>
+                        🔥 {streak} {streak === 1 ? 'Day' : 'Days'}
+                    </Text>
+                </View>
                 <Text style={[styles.title, darkTheme && styles.textDark]}>Sudoku</Text>
 
                 {hasSavedGame && (
@@ -130,5 +135,22 @@ const styles = StyleSheet.create({
     },
     textDarkSub: {
         color: '#a0a0a0',
+    },
+    streakBadge: {
+        marginBottom: 20,
+        backgroundColor: '#fff3cd',
+        paddingHorizontal: 15,
+        paddingVertical: 8,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#ffe69c',
+    },
+    streakText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#664d03',
+    },
+    streakTextDark: {
+        color: '#ffc107',
     },
 });

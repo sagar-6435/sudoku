@@ -3,6 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect } from 'react';
 import { Alert, AppState, AppStateStatus, Platform, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { RewardedAd, RewardedAdEventType, TestIds } from 'react-native-google-mobile-ads';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AdBanner from '../components/AdBanner';
 import BoardGrid from '../components/BoardGrid';
@@ -12,7 +13,7 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 
 export default function Game() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-    const { timeElapsed, mistakes, difficulty, togglePause, isWon, saveGame, isPaused, startNewGame, darkTheme } = useGame();
+    const { timeElapsed, mistakes, difficulty, togglePause, isWon, saveGame, isPaused, startNewGame, darkTheme, continueAfterError } = useGame();
 
     useEffect(() => {
         if (mistakes >= 3) {
@@ -21,7 +22,23 @@ export default function Game() {
                 "You've made 3 mistakes.",
                 [
                     {
+                        text: "Watch Ad & Continue",
+                        onPress: () => {
+                            const rewarded = RewardedAd.createForAdRequest(TestIds.REWARDED, {
+                                requestNonPersonalizedAdsOnly: true
+                            });
+                            rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {
+                                rewarded.show();
+                            });
+                            rewarded.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
+                                continueAfterError();
+                            });
+                            rewarded.load();
+                        }
+                    },
+                    {
                         text: "Restart",
+                        style: "destructive",
                         onPress: () => {
                             startNewGame(difficulty);
                         }
@@ -83,10 +100,13 @@ export default function Game() {
 
             {isPaused ? (
                 <View style={styles.pauseOverlay}>
-                    <Text style={[styles.pauseTitle, darkTheme && styles.textDarkWhite]}>Game Paused</Text>
-                    <TouchableOpacity style={styles.resumeBtn} onPress={togglePause}>
-                        <Text style={styles.resumeText}>Resume</Text>
-                    </TouchableOpacity>
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={[styles.pauseTitle, darkTheme && styles.textDarkWhite]}>Game Paused</Text>
+                        <TouchableOpacity style={styles.resumeBtn} onPress={togglePause}>
+                            <Text style={styles.resumeText}>Resume</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <AdBanner />
                 </View>
             ) : (
                 <>
@@ -96,7 +116,6 @@ export default function Game() {
                     <View style={styles.controlsContainer}>
                         <Controls />
                     </View>
-                    <AdBanner />
                 </>
             )}
         </SafeAreaView>
