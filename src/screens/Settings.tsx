@@ -61,7 +61,7 @@ export default function Settings() {
 
                 <View style={styles.footer}>
                     <Text style={[styles.footerText, darkTheme && styles.textDarkSub]}>
-                        Developed by webgenixx
+                        Developed by webgenixx ❤️
                     </Text>
                 </View>
             </View>

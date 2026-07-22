@@ -3,10 +3,10 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { TestIds, useInterstitialAd } from 'react-native-google-mobile-ads';
 import AdBanner from '../components/AdBanner';
 import { useGame } from '../context/GameContext';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { TestIds, useInterstitialAd } from '../utils/ads';
 
 export default function Win() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();

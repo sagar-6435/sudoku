@@ -19,7 +19,7 @@ export default function Splash() {
     return (
         <View style={[styles.container, darkTheme && styles.containerDark]}>
             <Text style={styles.title}>Classic Sudoku</Text>
-            <Text style={[styles.companyText, darkTheme && styles.companyTextDark]}>by webgenixx</Text>
+            <Text style={[styles.companyText, darkTheme && styles.companyTextDark]}>by webgenixx ❤️</Text>
         </View>
     );
 }

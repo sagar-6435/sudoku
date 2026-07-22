@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { RewardedAd, RewardedAdEventType, TestIds } from 'react-native-google-mobile-ads';
+import { RewardedAd, RewardedAdEventType, TestIds, isExpoGo } from '../utils/ads';
 import { Board, Difficulty, checkWin, generatePuzzle } from '../utils/sudoku';
 
 type GameContextType = {
@@ -196,6 +196,14 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         {
                             text: "Watch Ad",
                             onPress: () => {
+                                if (isExpoGo) {
+                                    import('react-native').then(({ Alert }) => {
+                                        Alert.alert("Expo Go", "Watching simulated Ad...");
+                                        setTimeout(() => executeHintLogic(), 2000);
+                                    });
+                                    return;
+                                }
+
                                 const rewarded = RewardedAd.createForAdRequest(TestIds.REWARDED, {
                                     requestNonPersonalizedAdsOnly: true
                                 });

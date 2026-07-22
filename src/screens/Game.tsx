@@ -3,13 +3,13 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect } from 'react';
 import { Alert, AppState, AppStateStatus, Platform, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { RewardedAd, RewardedAdEventType, TestIds } from 'react-native-google-mobile-ads';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AdBanner from '../components/AdBanner';
 import BoardGrid from '../components/BoardGrid';
 import Controls from '../components/Controls';
 import { useGame } from '../context/GameContext';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { RewardedAd, RewardedAdEventType, TestIds, isExpoGo } from '../utils/ads';
 
 export default function Game() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -24,6 +24,11 @@ export default function Game() {
                     {
                         text: "Watch Ad & Continue",
                         onPress: () => {
+                            if (isExpoGo) {
+                                Alert.alert("Expo Go", "Watching simulated Ad...");
+                                setTimeout(() => continueAfterError(), 2000);
+                                return;
+                            }
                             const rewarded = RewardedAd.createForAdRequest(TestIds.REWARDED, {
                                 requestNonPersonalizedAdsOnly: true
                             });
