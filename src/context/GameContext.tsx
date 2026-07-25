@@ -65,7 +65,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     if (lastPlayed === yesterday.toDateString()) {
                         currentStreak += 1;
                     } else {
-                        currentStreak = 1; // broken streak
+                        currentStreak = 0; // broken streak
                     }
                 } else {
                     currentStreak = 1; // first time

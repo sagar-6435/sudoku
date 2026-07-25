@@ -48,6 +48,14 @@
           "icon": "./assets/images/icon.png",
           "color": "#ffffff"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "2.3.0"
+          }
+        }
       ]
     ],
     "experiments": {
